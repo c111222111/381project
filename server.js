@@ -30,6 +30,10 @@ app.use(bodyParser.urlencoded({ extended: false }))
 
 app.listen(process.env.PORT || 8099);
 
+app.get('/', function(req,res) {
+  res.redirect('/login');
+});
+
 app.get('/reg',function(req,res){
 	res.status(200);
 	res.render("registry");
@@ -159,6 +163,7 @@ app.get('/hello',function(req,res,next){//check session
 	if(req.session.userID){
 		res.status(200);
 		res.end("Hello "+req.session.userID);
+		res.redirect('/read');
 	}else{
 		res.redirect('/login');
 	}
@@ -184,20 +189,54 @@ app.get('/logout',function(req,res){
 	
 });
 
+app.get('/read',function(req,res){
+	read_n_print(res);
+});
+
+app.get('/detail',function(req,res){
+	if(req.query._id == null){
+		res.end("No Restaurant Find!")
+	}else{
+		showdetail(res,req.query._id);
+	}
+});
+
+app.post('/update',function(req,res){
+	if(req.session.userID){
+	queryAsObject = req.body;
+	if (queryAsObject.owner == req.session.userID){
+		update(req,res);
+	}else{
+		res.end('You are not the Owner!');
+	}
+	}else{
+		res.redirect('/login');
+	}
+	
+});
+
+app.post('/delete',function(req,res){
+	if(req.session.userID){
+	queryAsObject = req.body;
+		if(req.session.userID == queryAsObject.owner){
+		del(req,res);
+		}else{
+		res.end("You are not the Owner");
+		}
+	}
+	else{
+		res.redirect('login');
+	}
+	
+});
 
 
-
-
-
-
+/*000000000000000000000000000000000000000*/
 app.get('/new', function(req,res) {
   res.status(200);
   res.render("upload");
 });
 
-app.get('/', function(req,res) {
-  res.redirect('/photos');
-});
 
 app.get('/photos', function(req,res) {
   console.log('/photos');
@@ -321,6 +360,83 @@ function insertRest(db,r,callback) {
 	});
 }
 
+
+function update(req,res){
+	console.log('update');
+	queryAsObject = req.body;
+	MongoClient.connect(mongourl,function(err,db) {
+		assert.equal(err,null);
+	var new_r = {};
+	
+	queryAsObject = req.body;
+	var new_r = {};
+	if (queryAsObject.rid) new_r['rid'] = queryAsObject.rid;
+	if (queryAsObject.name) new_r['name'] = queryAsObject.name;
+	if (queryAsObject.borough) new_r['borough'] = queryAsObject.borough;
+	if (queryAsObject.cuisine) new_r['cuisine'] = queryAsObject.cuisine;
+	
+	var address = {};
+	address['street'] = (queryAsObject.street) ? queryAsObject.street:'';
+	address['building'] = (queryAsObject.building) ? queryAsObject.building:'';
+	address['zipcode'] = (queryAsObject.zipcode) ? queryAsObject.zipcode:'';
+	/*
+	if (queryAsObject.lon && queryAsObject.att){
+		address['coord']=[2];
+		address['coord'][0] = queryAsObject.lon;
+		address['coord'][1] = queryAsObject.att;
+	}*/
+	address['coord'] = [2];
+	address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
+	address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
+	
+	new_r['address'] = address;
+	
+
+	var grades = {};
+	grades['user'] = req.session.userID;
+	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
+	new_r['grades'] = grades;
+
+	new_r['owner'] = req.session.userID;
+	
+	/*
+	for (key in queryAsObject) {
+			if (key != "_id") {
+				newValues[key] = queryAsObject[key];				
+			}
+		}
+	
+	for (key in queryAsObject) {
+				if (key == "_id") {
+					continue;
+				}
+				switch(key) {
+					case 'address.building': 
+						newValues[key] = queryAsObject[key]; break;
+					case 'address.street': 
+						newValues[key] = queryAsObject[key]; break;
+					case 'address.zipcode':
+						newValues[key] = queryAsObject[key]; break;
+					default:
+						newValues[key] = queryAsObject[key];	
+				}
+			}
+	
+	*/
+	var criteria = {};
+	criteria['_id'] = ObjectID(queryAsObject.id);
+	
+	
+	updateRestaurant(db,criteria,new_r,function(result) {
+			db.close();
+			res.writeHead(200, {"Content-Type": "text/plain"});
+			res.end("update was successful!");			
+		});
+	});
+	
+}
+
+
 function createRest(req,res) {
  
 	queryAsObject = req.body;
@@ -331,29 +447,25 @@ function createRest(req,res) {
 	if (queryAsObject.cuisine) new_r['cuisine'] = queryAsObject.cuisine;
 	
 	var address = {};
-	//address['street'] = 
-	if (queryAsObject.street) address['street'] = queryAsObject.street;
-	//address['building'] = 
-	if (queryAsObject.building) address['building'] = queryAsObject.building;
-	//address['zipcode'] = 
-	if (queryAsObject.zipcode) address['zipcode'] = queryAsObject.zipcode ;
-	
+	address['street'] = (queryAsObject.street) ? queryAsObject.street:'';
+	address['building'] = (queryAsObject.building) ? queryAsObject.building:'';
+	address['zipcode'] = (queryAsObject.zipcode) ? queryAsObject.zipcode:'';
+	/*
 	if (queryAsObject.lon && queryAsObject.att){
 		address['coord']=[2];
 		address['coord'][0] = queryAsObject.lon;
 		address['coord'][1] = queryAsObject.att;
-	}
-	//address['coord'] = [2];
-	//address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
-	//address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
-	if (address.length == 0){
+	}*/
+	address['coord'] = [2];
+	address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
+	address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
+	
 	new_r['address'] = address;
-	}
+	
 
 	var grades = {};
 	grades['user'] = req.session.userID;
-	//grades['score'] = 
-	if (queryAsObject.score) grades['score']= queryAsObject.score ;
+	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
 	new_r['grades'] = grades;
 
 	new_r['owner'] = req.session.userID;
@@ -372,6 +484,89 @@ function createRest(req,res) {
 	});
 }
 
+function read_n_print(res){
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,{},function(restaurants){
+			db.close();
+			if(restaurants.length == 0){
+				res.end('Not Found!');
+			}else{
+				res.render("rest",{r:restaurants});
+				//res.render("list",{p:photos});
+			}
+		});
+		
+	});
+}
+
+function showdetail(res,_id){
+	var criteria = {};
+	criteria['_id'] = ObjectID(_id);
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,criteria,function(details){
+			db.close();
+			if(details.length == 0){
+				res.end('Not Found!');
+			}else{
+				console.log(details);
+				res.render("detail",{d:details});
+			}
+		});
+		
+	});
+}
+
+
+function findRestaurants(db,criteria,callback){
+	var restaurants = [];
+	cursor = db.collection('rest').find(criteria);
+	cursor.each(function(err, doc) {
+		assert.equal(err, null); 
+		if (doc != null) {
+			restaurants.push(doc);
+		} else {
+			callback(restaurants); 
+		}
+	});
+}
+
+function updateRestaurant(db,criteria,newValues,callback) {
+	db.collection('rest').updateOne(
+		criteria,{$set: newValues},function(err,result) {
+			assert.equal(err,null);
+			console.log("update was successfully");
+			console.log(JSON.stringify(newValues));
+			callback(result);
+	});
+}
+
+function del(req,res){
+	queryAsObject = req.body;
+	var criteria = {};
+	criteria['_id'] = ObjectID(queryAsObject.id);
+	
+	MongoClient.connect(mongourl,function(err,db) {
+		assert.equal(err,null);
+		console.log('Connected to MongoDB\n');
+		deleteRestaurant(db,criteria,function(result) {
+			db.close();
+			console.log(JSON.stringify(result));
+			res.writeHead(200, {"Content-Type": "text/plain"});
+			res.end("delete was successful!");			
+		});
+	});
+}
+
+
+function deleteRestaurant(db,criteria,callback) {
+	db.collection('rest').deleteMany(criteria,function(err,result) {
+		assert.equal(err,null);
+		console.log("Delete was successfully");
+		callback(result);
+	});
+}
 
 function deletePhoto(db,criteria,callback) {
   db.collection('photos').deleteMany(criteria,function(err,result) {
