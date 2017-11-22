@@ -8,8 +8,10 @@
 		"ejs": "^2.5.7",
 		"exif": "0.6",
 		"express": "^4.16.2",
-		"express-fileupload": "latest",
+		"express-fileupload": "^0.3.0",
 		"express-session": "^1.15.6",
+		"fileupload": "^1.0.0",
+		"fs": "0.0.1-security",
 		"mongodb": "*"
 	},
 	"scripts": {

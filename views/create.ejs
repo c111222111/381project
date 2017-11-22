@@ -1,7 +1,7 @@
 ﻿<html>
 <body>
 	<h1>Create new Restaurant</h1>
-	<form action ="/create" method="post">
+	<form action ="/fileupload" method="post" enctype="multipart/form-data">
 		<table>
 		  <tr>
 			<td>Restaurant ID:</td> <td><input type="text" name = "rid"></td>
@@ -37,8 +37,26 @@
 			<td>Grades:</td> 
 		  </tr>
 		  <tr>
-			<td>Score:</td> <td><input type="text" name="score"></td>
+			<td>Score:</td> 
+			<td>
+			<select name="score">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+			</select>
+
+			</td>
 		  </tr>
+		  <tr>
+			<td>File:</td> <td><input type="file" name="filetoupload"><br></td>
+		  </tr>	  
 		  <tr>
 			<td><input type="submit" value="Submit"></td>
 		  </tr>

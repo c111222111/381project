@@ -28,7 +28,12 @@ app.use(session({
 app.use(fileUpload());
 app.use(bodyParser.urlencoded({ extended: false }))
 
+
 app.listen(process.env.PORT || 8099);
+
+app.get('/', function(req,res) {
+  res.redirect('/login');
+});
 
 app.get('/reg',function(req,res){
 	res.status(200);
@@ -98,13 +103,8 @@ app.post('/reg',function(req,res){
 									res.status(200);
 									res.end('User Created');
 				});
-				});
-				
-		
+				});		
 	}
-	
-	
-	
 });
 
 
@@ -157,25 +157,41 @@ app.post('/login',function(req,res){
 
 app.get('/hello',function(req,res,next){//check session
 	if(req.session.userID){
-		res.status(200);
-		res.end("Hello "+req.session.userID);
+		res.redirect('/read');
 	}else{
 		res.redirect('/login');
 	}
 });
 
 
-app.get('/create', function(req,res,next) {
+app.get('/create', function(req,res) {
 	if(req.session.userID){
 		res.render("create");
-		next();
 	}else{
 		res.redirect('/login');
 	}
 });
 
-app.post('/create', function(req,res) {
-	createRest(req,res);
+app.post('/fileupload', function(req,res) {
+/*	if(req.files != "undefined"){
+	var filename = req.files.filetoupload.name;
+	var mimetype = req.files.filetoupload.mimetype;
+	console.log(filename,mimetype);
+	var image = {};
+	image['image'] = filename;
+
+	fs.readFile(filename, function(err,data) {
+      var new_r2 = {};
+      new_r2['photo-mimetype'] = mimetype;
+      new_r2['photo'] = new Buffer(data).toString('base64');
+	});
+	}else{
+		var new_r2 = {};
+		new_r2['photo-mimetype'] ='';
+		new_r2['photo'] ='';
+	}*/
+	var new_r2 = {};
+	createRest(req,res);	
 });
 
 app.get('/logout',function(req,res){
@@ -184,20 +200,78 @@ app.get('/logout',function(req,res){
 	
 });
 
+app.get('/read',function(req,res){
+	read_n_print(res);
+});
+
+app.get('/vote',function(req,res){
+	if(req.session.userID){
+		vote(res);
+	}else{
+		res.redirect('login');
+	}
+});
+
+app.get('/voteto',function(req,res){
+	if(req.query._id == null){
+		res.end("Not Found!")
+	}else{
+		voteto(res,req.query._id);
+	}
+});
 
 
+app.get('/detail',function(req,res){
+	if(req.query._id == null){
+		res.end("No Restaurant Find!")
+	}else{
+		showdetail(res,req.query._id);
+	}
+});
+
+app.post('/voteto',function(req,res){
+	if(req.session.userID){
+		insertvote(req,res);
+	}
+});
 
 
+app.post('/update',function(req,res){
+	if(req.session.userID){
+	queryAsObject = req.body;
+	if (queryAsObject.owner == req.session.userID){
+		update(req,res);
+	}else{
+		res.end('You are not the Owner!');
+	}
+	}else{
+		res.redirect('/login');
+	}
+	
+});
+
+app.post('/delete',function(req,res){
+	if(req.session.userID){
+	queryAsObject = req.body;
+		if(req.session.userID == queryAsObject.owner){
+		del(req,res);
+		}else{
+		res.end("You are not the Owner");
+		}
+	}
+	else{
+		res.redirect('login');
+	}
+	
+});
 
 
+/*000000000000000000000000000000000000000*/
 app.get('/new', function(req,res) {
   res.status(200);
   res.render("upload");
 });
 
-app.get('/', function(req,res) {
-  res.redirect('/photos');
-});
 
 app.get('/photos', function(req,res) {
   console.log('/photos');
@@ -213,46 +287,6 @@ app.get('/photos', function(req,res) {
   });
 });
 
-app.post('/fileupload', function(req,res) {
-  var filename = req.files.filetoupload.name;
-  var title = (req.body.title.length > 0) ? req.body.title : "untitled";
-  var mimetype = req.files.filetoupload.mimetype;
-  console.log("title = " + title);
-  console.log("filename = " + filename);
-  //
-  var exif = {};
-  var image = {};
-  image['image'] = filename;
-
-  try {
-    new ExifImage(image, function(error, exifData) {
-      if (error) {
-        console.log('ExifImage: ' + error.message);
-      }
-      else {
-        exif['image'] = exifData.image;
-        exif['exif'] = exifData.exif;
-        exif['gps'] = exifData.gps;
-        console.log('Exif: ' + JSON.stringify(exif));
-      }
-    })
-  } catch (error) {}
-  //
-  fs.readFile(filename, function(err,data) {
-    MongoClient.connect(mongourl,function(err,db) {
-      var new_r = {};
-      new_r['title'] = title;
-      new_r['mimetype'] = mimetype;
-      new_r['image'] = new Buffer(data).toString('base64');
-      new_r['exif'] = exif;
-      insertPhoto(db,new_r,function(result) {
-        db.close();
-        res.status(200);
-        res.end('Photo was inserted into MongoDB!');
-      })
-    });
-  })
-});
 
 app.get('/display', function(req,res) {
   MongoClient.connect(mongourl, function(err,db) {
@@ -321,9 +355,14 @@ function insertRest(db,r,callback) {
 	});
 }
 
-function createRest(req,res) {
- 
+
+function update(req,res){
+	console.log('update');
 	queryAsObject = req.body;
+	MongoClient.connect(mongourl,function(err,db) {
+		assert.equal(err,null);
+	
+		queryAsObject = req.body;
 	var new_r = {};
 	if (queryAsObject.rid) new_r['rid'] = queryAsObject.rid;
 	if (queryAsObject.name) new_r['name'] = queryAsObject.name;
@@ -331,34 +370,130 @@ function createRest(req,res) {
 	if (queryAsObject.cuisine) new_r['cuisine'] = queryAsObject.cuisine;
 	
 	var address = {};
-	//address['street'] = 
-	if (queryAsObject.street) address['street'] = queryAsObject.street;
-	//address['building'] = 
-	if (queryAsObject.building) address['building'] = queryAsObject.building;
-	//address['zipcode'] = 
-	if (queryAsObject.zipcode) address['zipcode'] = queryAsObject.zipcode ;
+	address['street'] = (queryAsObject.street) ? queryAsObject.street:'';
+	address['building'] = (queryAsObject.building) ? queryAsObject.building:'';
+	address['zipcode'] = (queryAsObject.zipcode) ? queryAsObject.zipcode:'';
 	
+	address['coord'] = [2];
+	address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
+	address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
+	
+	new_r['address'] = address;
+	
+
+	var grades = {};
+	grades['user'] = req.session.userID;
+	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
+	new_r['grades'] = grades;
+
+	new_r['owner'] = req.session.userID;
+	
+	var criteria = {};
+	criteria['_id'] = ObjectID(queryAsObject.id);
+	
+	
+	updateRestaurant(db,criteria,new_r,function(result) {
+			db.close();
+			res.writeHead(200, {"Content-Type": "text/plain"});
+			res.end("update was successful!");			
+		});
+	});
+	
+}
+
+function insertvote(req,res){
+	var notfound = false;
+	var usernotfound = true;
+	var id = req.body.id;
+	var criteria = {};
+	criteria['_id'] = ObjectID(req.body.id);	
+	var user = req.session.userID;
+	var score = req.body.score;
+	
+	MongoClient.connect(mongourl, function(err,db) {
+				assert.equal(err,null);
+				console.log('Connected to MongoDB');
+			
+				
+				var alldata = db.collection("rest").find(criteria);
+				alldata.each(function(err,result){
+					assert.equal(err,null);
+					console.log("Checking from DB");
+								if(result == null){								
+										notfound = true;
+										console.log(notfound,usernotfound);
+										if(usernotfound==true){
+											inserting(user,score,id);
+										}
+								}else{
+									if(result.grades.user == user){
+										usernotfound = false;
+										res.status(200);
+										res.end("You have already voted");
+									
+									}
+				
+									}
+				});
+	});
+	
+	
+}
+
+function inserting(user,score,id){
+	console.log(user,score,id);
+	var grades = {};
+	grades['user'] = user;
+	grades['score'] = score;
+	var criteria = {};
+	criteria['_id'] = ObjectID(id);
+	
+	//How to do insert?
+	
+	
+}
+
+
+
+function createRest(req,res) {
+ 
+	queryAsObject = req.body;
+	console.log(queryAsObject);
+	var new_r = {};
+	//new_r['photo-mimetype'] = new_r2['photo-mimetype'];
+	//new_r['photo'] = new_r2['photo'];
+	if (queryAsObject.rid) new_r['rid'] = queryAsObject.rid;
+	if (queryAsObject.name) new_r['name'] = queryAsObject.name;
+	if (queryAsObject.borough) new_r['borough'] = queryAsObject.borough;
+	if (queryAsObject.cuisine) new_r['cuisine'] = queryAsObject.cuisine;
+	
+	var address = {};
+	address['street'] = (queryAsObject.street) ? queryAsObject.street:'';
+	address['building'] = (queryAsObject.building) ? queryAsObject.building:'';
+	address['zipcode'] = (queryAsObject.zipcode) ? queryAsObject.zipcode:'';
+	/*
 	if (queryAsObject.lon && queryAsObject.att){
 		address['coord']=[2];
 		address['coord'][0] = queryAsObject.lon;
 		address['coord'][1] = queryAsObject.att;
-	}
-	//address['coord'] = [2];
-	//address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
-	//address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
-	if (address.length == 0){
+	}*/
+	address['coord'] = [2];
+	address['coord'][0] = (queryAsObject.lon) ? queryAsObject.lon : '';
+	address['coord'][1] = (queryAsObject.att) ? queryAsObject.att : '';
+	
 	new_r['address'] = address;
-	}
+	
 
 	var grades = {};
 	grades['user'] = req.session.userID;
-	//grades['score'] = 
-	if (queryAsObject.score) grades['score']= queryAsObject.score ;
+	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
 	new_r['grades'] = grades;
 
 	new_r['owner'] = req.session.userID;
-
-	console.log('About to insert: ' + JSON.stringify(new_r));
+	console.log(new_r);
+	
+		
+	
 
 	MongoClient.connect(mongourl,function(err,db) {
 		assert.equal(err,null);
@@ -372,6 +507,123 @@ function createRest(req,res) {
 	});
 }
 
+function read_n_print(res){
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,{},function(restaurants){
+			db.close();
+			if(restaurants.length == 0){
+				res.end('Not Found!');
+			}else{
+				res.render("rest",{r:restaurants});
+				//res.render("list",{p:photos});
+			}
+		});
+		
+	});
+}
+function vote(res){
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,{},function(restaurants){
+			db.close();
+			if(restaurants.length == 0){
+				res.end('Not Found!');
+			}else{
+				res.render("vote",{r:restaurants});
+				//res.render("list",{p:photos});
+			}
+		});
+		
+	});
+}
+
+
+function showdetail(res,_id){
+	var criteria = {};
+	criteria['_id'] = ObjectID(_id);
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,criteria,function(details){
+			db.close();
+			if(details.length == 0){
+				res.end('Not Found!');
+			}else{
+				console.log(details);
+				res.render("detail",{d:details});
+			}
+		});
+		
+	});
+}
+
+function voteto(res,_id){
+	var criteria = {};
+	criteria['_id'] = ObjectID(_id);
+	MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,criteria,function(details){
+			db.close();
+			if(details.length == 0){
+				res.end('Not Found!');
+			}else{
+				console.log(details);
+				res.render("voteto",{d:details});
+			}
+		});
+		
+	});
+}
+
+
+function findRestaurants(db,criteria,callback){
+	var restaurants = [];
+	cursor = db.collection('rest').find(criteria);
+	cursor.each(function(err, doc) {
+		assert.equal(err, null); 
+		if (doc != null) {
+			restaurants.push(doc);
+		} else {
+			callback(restaurants); 
+		}
+	});
+}
+
+function updateRestaurant(db,criteria,newValues,callback) {
+	db.collection('rest').updateOne(
+		criteria,{$set: newValues},function(err,result) {
+			assert.equal(err,null);
+			console.log("update was successfully");
+			console.log(JSON.stringify(newValues));
+			callback(result);
+	});
+}
+
+function del(req,res){
+	queryAsObject = req.body;
+	var criteria = {};
+	criteria['_id'] = ObjectID(queryAsObject.id);
+	
+	MongoClient.connect(mongourl,function(err,db) {
+		assert.equal(err,null);
+		console.log('Connected to MongoDB\n');
+		deleteRestaurant(db,criteria,function(result) {
+			db.close();
+			console.log(JSON.stringify(result));
+			res.writeHead(200, {"Content-Type": "text/plain"});
+			res.end("delete was successful!");			
+		});
+	});
+}
+
+
+function deleteRestaurant(db,criteria,callback) {
+	db.collection('rest').deleteMany(criteria,function(err,result) {
+		assert.equal(err,null);
+		console.log("Delete was successfully");
+		callback(result);
+	});
+}
 
 function deletePhoto(db,criteria,callback) {
   db.collection('photos').deleteMany(criteria,function(err,result) {

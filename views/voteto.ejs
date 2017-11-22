@@ -1,0 +1,30 @@
+<html><head><title><%=d[0].name%></title></head> 
+<body>
+
+<h1><%=d[0].name%></h1>
+<form id='details' method='POST' action='/voteto'>
+<input type="hidden" name="id" value="<%=d[0]._id%>"><br>
+
+
+Grades:<br>
+<input type="text" name="user" value="<%=d[0].grades.user%>" readonly>,
+<select name="score">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+			</select>
+
+<input type="hidden" name="owner" value="<%=d[0].owner%>" readonly><br>
+</form>
+<button type="submit" form="details" value="Edit">Vote</button><br>
+
+
+</body>
+</html> 

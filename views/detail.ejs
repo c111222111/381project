@@ -1,0 +1,75 @@
+<html><head><title><%=d[0].name%></title></head> 
+<body>
+
+<h1><%=d[0].name%></h1>
+<form id='details' method='POST' action='/update'>
+<input type="hidden" name="id" value="<%=d[0]._id%>"><br>
+
+Name: <input type="text" name="name" value="<%=d[0].name%>" ><br>
+<% if (d[0].borough) { %>Borough: <input type="text" name="borough" value="<%=d[0].borough%>" ><br>
+<%}else{%>
+Borough: <input type="text" name="borough" value="" ><br><%}%>
+<% if (d[0].cuisine) { %>Cuisine: <input type="text" name="cuisine" value="<%=d[0].cuisine%>" ><br>
+<%}else{%>
+Cuisine:<input type="text" name="cuisine" value=""><br><%}%>
+Address:<br>
+<% if (d[0].address) { %>
+<% if (d[0].address.street.length > 0) { %>
+<input type="text" name="street" value="<%=d[0].address.street%>" >
+<%}else{%>
+<input type="text" name="street" value=""><%}%>,
+<% if (d[0].address.building.length > 0) { %>
+<input type="text" name="building" value="<%=d[0].address.building%>" ><br>
+<%}else{%>
+<input type="text" name="building" value=""><%}%>
+<br>
+<%}else{%>
+<input type="text" name="street" value="">
+<input type="text" name="building" value=""><br>
+<%}%>
+Zipcode:<br>
+<% if (d[0].address.zipcode) { %>
+<input type="text" name="zipcode" value="<%=d[0].address.zipcode%>" ><br>
+<%}else{%>
+<input type="text" name="zipcode" value=""><br><%}%>
+Coord:<br>
+<%if (d[0].address.coord){%>
+<%for(var i =0;i<d[0].address.coord.length;i++){%>
+<% if (d[0].address.coord[i].length > 0){%>
+<input type="text" name="coord" value="<%=d[0].address.coord[i]%>" >,
+<%}else{%>
+<input type="text" name="coord" value="">
+<%}}}else{%>
+<input type="text" name="lon" value="" >
+<input type="text" name="lan" value="" >
+<%}%>
+<br>
+Grades:<br>
+<input type="text" name="user" value="<%=d[0].grades.user%>" readonly>,
+<select name="score">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+				<option value="8">8</option>
+				<option value="9">9</option>
+				<option value="10">10</option>
+			</select>
+
+<input type="hidden" name="owner" value="<%=d[0].owner%>" readonly><br>
+</form>
+<button type="submit" form="details" value="Edit">Edit</button><br>
+
+<form id='del' method="POST" action="/delete">
+<input type="hidden" name="id" value="<%=d[0]._id%>"/>
+<input type="hidden" name="owner" value="<%=d[0].owner%>" readonly>
+<button type="submit" form="del" value="Delete">Delete</button><br>
+</form>
+
+<!-- <a href=/delete?_id=<%=d[0].id%>&<%=d[0].owner%>>Delete <%=d[0].name%></a> -->
+
+</body>
+</html> 
