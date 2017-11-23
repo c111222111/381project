@@ -173,7 +173,7 @@ app.get('/create', function(req,res) {
 });
 
 app.post('/fileupload', function(req,res) {
-/*	if(req.files != "undefined"){
+	/*if(req.files){
 	var filename = req.files.filetoupload.name;
 	var mimetype = req.files.filetoupload.mimetype;
 	console.log(filename,mimetype);
@@ -189,8 +189,8 @@ app.post('/fileupload', function(req,res) {
 		var new_r2 = {};
 		new_r2['photo-mimetype'] ='';
 		new_r2['photo'] ='';
-	}*/
-	var new_r2 = {};
+	}
+	var new_r2 = {};*/
 	createRest(req,res);	
 });
 
@@ -229,10 +229,9 @@ app.get('/detail',function(req,res){
 	}
 });
 
-app.post('/voteto',function(req,res){
-	if(req.session.userID){
+app.post('/vo',function(req,res){
+		console.log("Hello");
 		insertvote(req,res);
-	}
 });
 
 
@@ -380,11 +379,21 @@ function update(req,res){
 	
 	new_r['address'] = address;
 	
-
-	var grades = {};
+	new_r['grades'] = [];
+	/*var grades = [];
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
-	new_r['grades'] = grades;
+	new_r['grades'] = grades;*/
+	new_r['photo-mimetype'] = '';
+	new_r['photo'] = '';
+	try{
+		new_r['photo-mimetype'] = req.files.filetoupload.mimetype;
+		new_r['photo'] = new Buffer(req.files.filetoupload.data).toString('base64');
+		console.log('Have Photo');
+	}catch(err){
+		console.log('No Photo');
+	}
+	
 
 	new_r['owner'] = req.session.userID;
 	
@@ -423,15 +432,20 @@ function insertvote(req,res){
 										notfound = true;
 										console.log(notfound,usernotfound);
 										if(usernotfound==true){
-											inserting(user,score,id);
+											inserting(user,score,id,db,function(result){
+												res.status(200);
+												res.end('Vote successful');
+											});
 										}
 								}else{
-									if(result.grades.user == user){
+								for(var i=0;i<result.grades.length;i++){
+									if(result.grades[i].user == user){
 										usernotfound = false;
 										res.status(200);
 										res.end("You have already voted");
 									
 									}
+								}
 				
 									}
 				});
@@ -440,15 +454,25 @@ function insertvote(req,res){
 	
 }
 
-function inserting(user,score,id){
+function inserting(user,score,id,db,callback){
 	console.log(user,score,id);
+	var new_r = {};
 	var grades = {};
 	grades['user'] = user;
 	grades['score'] = score;
+	
+	new_r['grades'] = grades;
 	var criteria = {};
 	criteria['_id'] = ObjectID(id);
 	
-	//How to do insert?
+	//do insert
+	db.collection('rest').updateOne(criteria,{$push:new_r},function(err,result){
+		assert.equal(err,null);
+		console.log('Vote Successfully');
+		callback(result);
+	});
+	
+	
 	
 	
 }
@@ -484,13 +508,27 @@ function createRest(req,res) {
 	new_r['address'] = address;
 	
 
-	var grades = {};
+	new_r['grades'] = []
+	/*var grades = [];
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
-	new_r['grades'] = grades;
+	new_r['grades'] = grades;*/
 
 	new_r['owner'] = req.session.userID;
 	console.log(new_r);
+	
+	
+	new_r['photo'] = '';
+	new_r['photo-mimetype']='';
+	
+	try{
+		console.log(req.files);
+		new_r['photo-mimetype'] = req.files.filetoupload.mimetype;
+		new_r['photo'] = new Buffer(req.files.filetoupload.data).toString('base64');
+		console.log('Have Photo');
+	}catch(err){
+		console.log('No Photo');
+	}
 	
 		
 	
@@ -550,7 +588,15 @@ function showdetail(res,_id){
 				res.end('Not Found!');
 			}else{
 				console.log(details);
+				if(details[0].photo==''){
 				res.render("detail",{d:details});
+				console.log("HI87");
+				}else{
+					console.log("Hello87");
+					
+					
+					res.render("detailphoto",{d:details})
+				}
 			}
 		});
 		
@@ -567,7 +613,7 @@ function voteto(res,_id){
 			if(details.length == 0){
 				res.end('Not Found!');
 			}else{
-				console.log(details);
+				console.log(_id);
 				res.render("voteto",{d:details});
 			}
 		});
