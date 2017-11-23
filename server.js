@@ -21,7 +21,7 @@ var session = require('cookie-session');
 
 app.use(session({
   name:'session',
-  keys:['Please give me A','Raymond So so handsome']
+  keys:['Please give me A','Donny GG']
 }));
 
 
@@ -46,6 +46,7 @@ app.post('/reg',function(req,res){
 	var pw = req.body.password;
 	var repw = req.body.repassword;
 	var notfound = false;
+	var notfound1 = true;
 	var correct = false;
 	
 	if ((user && pw && repw) != ""){
@@ -69,8 +70,24 @@ app.post('/reg',function(req,res){
 								if(result == null){
 										db.close;
 										notfound = true;
+											if((notfound) && (correct)&&(notfound1)){				
+												MongoClient.connect(mongourl, function(err,db){
+													assert.equal(err,null);
+				
+													var new_user = {};
+													new_user['username'] = user;
+													new_user['password'] = pw;
+													
+													reg2DB(db,new_user,function(result){
+																		db.close();
+																		res.status(200);
+																		res.end('User Created');
+													});
+													});	
+											}
 								}else{
 									if(result.username == user){
+										notfound1 = false;
 										res.status(200);
 										res.end("User already Exist");
 									}
@@ -90,21 +107,6 @@ app.post('/reg',function(req,res){
 	}
 	//console.log("2",notfound);
 	//console.log(correct);
-	if((notfound) && (correct)){				
-				MongoClient.connect(mongourl, function(err,db){
-				assert.equal(err,null);
-				
-				var new_user = {};
-				new_user['username'] = user;
-				new_user['password'] = pw;
-				
-				reg2DB(db,new_user,function(result){
-									db.close();
-									res.status(200);
-									res.end('User Created');
-				});
-				});		
-	}
 });
 
 
@@ -149,8 +151,6 @@ app.post('/login',function(req,res){
 		});
 	});
 	
-
-	
 	
 });
 
@@ -173,24 +173,6 @@ app.get('/create', function(req,res) {
 });
 
 app.post('/fileupload', function(req,res) {
-/*	if(req.files != "undefined"){
-	var filename = req.files.filetoupload.name;
-	var mimetype = req.files.filetoupload.mimetype;
-	console.log(filename,mimetype);
-	var image = {};
-	image['image'] = filename;
-
-	fs.readFile(filename, function(err,data) {
-      var new_r2 = {};
-      new_r2['photo-mimetype'] = mimetype;
-      new_r2['photo'] = new Buffer(data).toString('base64');
-	});
-	}else{
-		var new_r2 = {};
-		new_r2['photo-mimetype'] ='';
-		new_r2['photo'] ='';
-	}*/
-	var new_r2 = {};
 	createRest(req,res);	
 });
 
@@ -229,10 +211,9 @@ app.get('/detail',function(req,res){
 	}
 });
 
-app.post('/voteto',function(req,res){
-	if(req.session.userID){
+app.post('/vo',function(req,res){
+		console.log("Hello");
 		insertvote(req,res);
-	}
 });
 
 
@@ -266,78 +247,6 @@ app.post('/delete',function(req,res){
 });
 
 
-/*000000000000000000000000000000000000000*/
-app.get('/new', function(req,res) {
-  res.status(200);
-  res.render("upload");
-});
-
-
-app.get('/photos', function(req,res) {
-  console.log('/photos');
-  MongoClient.connect(mongourl, function(err,db) {
-    assert.equal(err,null);
-    console.log('Connected to MongoDB');
-    findPhoto(db,{},{_id:1,title:1},function(photos) {
-      db.close();
-      console.log('Disconnected MongoDB');
-      res.status(200);
-      res.render("list",{p:photos});
-    })
-  });
-});
-
-
-app.get('/display', function(req,res) {
-  MongoClient.connect(mongourl, function(err,db) {
-    assert.equal(err,null);
-    console.log('Connected to MongoDB');
-    var criteria = {};
-    criteria['_id'] = ObjectID(req.query._id);
-    findPhoto(db,criteria,{},function(photo) {
-      db.close();
-      console.log('Disconnected MongoDB');
-      console.log('Photo returned = ' + photo.length);
-      console.log('GPS = ' + JSON.stringify(photo[0].exif.gps));
-      var lat = -1;
-      var lon = -1;
-      if (photo[0].exif.gps &&
-          Object.keys(photo[0].exif.gps).length !== 0) {
-        var lat = gpsDecimal(
-          photo[0].exif.gps.GPSLatitudeRef,  // direction
-          photo[0].exif.gps.GPSLatitude[0],  // degrees
-          photo[0].exif.gps.GPSLatitude[1],  // minutes
-          photo[0].exif.gps.GPSLatitude[2],  // seconds
-        );
-        var lon = gpsDecimal(
-          photo[0].exif.gps.GPSLongitudeRef,
-          photo[0].exif.gps.GPSLongitude[0],
-          photo[0].exif.gps.GPSLongitude[1],
-          photo[0].exif.gps.GPSLongitude[2],
-        );
-      }
-      console.log(lat,lon);      
-      res.status(200);
-      res.render("photo",{p:photo[0],lat:lat,lon:lon});
-    });
-  });
-});
-
-app.get('/map', function(req,res) {
-  res.render('gmap.ejs',
-             {lat:req.query.lat,lon:req.query.lon,title:req.query.title});
-});
-
-
-function insertPhoto(db,r,callback) {
-  db.collection('photos').insertOne(r,function(err,result) {
-    assert.equal(err,null);
-    console.log("insert was successful!");
-    console.log(JSON.stringify(result));
-    callback(result);
-  });
-}
-
 function reg2DB(db,new_user,callback){
 	db.collection('User').insertOne(new_user,function(err,res){
 	assert.equal(err,null);
@@ -357,7 +266,6 @@ function insertRest(db,r,callback) {
 
 
 function update(req,res){
-	console.log('update');
 	queryAsObject = req.body;
 	MongoClient.connect(mongourl,function(err,db) {
 		assert.equal(err,null);
@@ -380,11 +288,21 @@ function update(req,res){
 	
 	new_r['address'] = address;
 	
-
-	var grades = {};
+	new_r['grades'] = [];
+	/*var grades = [];
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
-	new_r['grades'] = grades;
+	new_r['grades'] = grades;*/
+	new_r['photo-mimetype'] = '';
+	new_r['photo'] = '';
+	try{
+		new_r['photo-mimetype'] = req.files.filetoupload.mimetype;
+		new_r['photo'] = new Buffer(req.files.filetoupload.data).toString('base64');
+		console.log('Have Photo');
+	}catch(err){
+		console.log('No Photo');
+	}
+	
 
 	new_r['owner'] = req.session.userID;
 	
@@ -423,15 +341,20 @@ function insertvote(req,res){
 										notfound = true;
 										console.log(notfound,usernotfound);
 										if(usernotfound==true){
-											inserting(user,score,id);
+											inserting(user,score,id,db,function(result){
+												res.status(200);
+												res.end('Vote successful');
+											});
 										}
 								}else{
-									if(result.grades.user == user){
+								for(var i=0;i<result.grades.length;i++){
+									if(result.grades[i].user == user){
 										usernotfound = false;
 										res.status(200);
 										res.end("You have already voted");
 									
 									}
+								}
 				
 									}
 				});
@@ -440,16 +363,23 @@ function insertvote(req,res){
 	
 }
 
-function inserting(user,score,id){
+function inserting(user,score,id,db,callback){
 	console.log(user,score,id);
+	var new_r = {};
 	var grades = {};
 	grades['user'] = user;
 	grades['score'] = score;
+	
+	new_r['grades'] = grades;
 	var criteria = {};
 	criteria['_id'] = ObjectID(id);
 	
-	//How to do insert?
-	
+	//do insert
+	db.collection('rest').updateOne(criteria,{$push:new_r},function(err,result){
+		assert.equal(err,null);
+		console.log('Vote Successfully');
+		callback(result);
+	});
 	
 }
 
@@ -484,16 +414,28 @@ function createRest(req,res) {
 	new_r['address'] = address;
 	
 
-	var grades = {};
+	new_r['grades'] = []
+	/*var grades = [];
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
-	new_r['grades'] = grades;
+	new_r['grades'] = grades;*/
 
 	new_r['owner'] = req.session.userID;
 	console.log(new_r);
 	
-		
 	
+	new_r['photo'] = '';
+	new_r['photo-mimetype']='';
+	
+	try{
+		console.log(req.files);
+		new_r['photo-mimetype'] = req.files.filetoupload.mimetype;
+		new_r['photo'] = new Buffer(req.files.filetoupload.data).toString('base64');
+		console.log('Have Photo');
+	}catch(err){
+		console.log('No Photo');
+	}
+		
 
 	MongoClient.connect(mongourl,function(err,db) {
 		assert.equal(err,null);
@@ -501,7 +443,7 @@ function createRest(req,res) {
 		
 		insertRest(db,new_r,function(result) {
 			db.close();
-			console.log(JSON.stringify(result));
+			console.log("inserting");
 			res.end('Insert Successfully');
 		});
 	});
@@ -516,7 +458,6 @@ function read_n_print(res){
 				res.end('Not Found!');
 			}else{
 				res.render("rest",{r:restaurants});
-				//res.render("list",{p:photos});
 			}
 		});
 		
@@ -531,7 +472,6 @@ function vote(res){
 				res.end('Not Found!');
 			}else{
 				res.render("vote",{r:restaurants});
-				//res.render("list",{p:photos});
 			}
 		});
 		
@@ -549,8 +489,14 @@ function showdetail(res,_id){
 			if(details.length == 0){
 				res.end('Not Found!');
 			}else{
-				console.log(details);
+				//console.log(details);
+				if(details[0].photo==''){
 				res.render("detail",{d:details});
+				console.log("No photo display");
+				}else{
+					console.log("display Photo");				
+					res.render("detailphoto",{d:details})
+				}
 			}
 		});
 		
@@ -567,7 +513,7 @@ function voteto(res,_id){
 			if(details.length == 0){
 				res.end('Not Found!');
 			}else{
-				console.log(details);
+				console.log("redirect to vote");
 				res.render("voteto",{d:details});
 			}
 		});
@@ -594,7 +540,6 @@ function updateRestaurant(db,criteria,newValues,callback) {
 		criteria,{$set: newValues},function(err,result) {
 			assert.equal(err,null);
 			console.log("update was successfully");
-			console.log(JSON.stringify(newValues));
 			callback(result);
 	});
 }
@@ -611,7 +556,7 @@ function del(req,res){
 			db.close();
 			console.log(JSON.stringify(result));
 			res.writeHead(200, {"Content-Type": "text/plain"});
-			res.end("delete was successful!");			
+			res.end("delete success!");			
 		});
 	});
 }
@@ -620,34 +565,8 @@ function del(req,res){
 function deleteRestaurant(db,criteria,callback) {
 	db.collection('rest').deleteMany(criteria,function(err,result) {
 		assert.equal(err,null);
-		console.log("Delete was successfully");
+		console.log("Deleting");
 		callback(result);
 	});
 }
 
-function deletePhoto(db,criteria,callback) {
-  db.collection('photos').deleteMany(criteria,function(err,result) {
-    assert.equal(err,null);
-    console.log("delete was successful!");
-    console.log(JSON.stringify(result));
-    callback(result);
-  });
-}
-
-function findPhoto(db,criteria,fields,callback) {
-  var cursor = db.collection("photos").find(criteria);
-  var photos = [];
-  cursor.each(function(err,doc) {
-    assert.equal(err,null);
-    if (doc != null) {
-      photos.push(doc);
-    } else {
-      callback(photos);
-    }
-  });
-}
-
-function gpsDecimal(direction,degrees,minutes,seconds) {
-  var d = degrees + minutes / 60 + seconds / (60 * 60);
-  return (direction === 'S' || direction === 'W') ? d *= -1 : d;
-}
