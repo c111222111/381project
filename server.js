@@ -216,7 +216,8 @@ app.get('/logout',function(req,res){
 });
 
 app.get('/read',function(req,res){
-	read_n_print(res);
+	var criteria = {};
+	read_n_print(res,criteria);
 });
 
 app.get('/vote',function(req,res){
@@ -264,6 +265,36 @@ app.post('/update',function(req,res){
 	
 });
 
+app.get('/search',function(req,res){
+	res.render("search");
+});
+
+app.post('/search',function(req,res){
+	console.log(req.body.criteria,req.body.option);
+	/*
+	var criteria = {};
+	if(req.body.option=='street'||req.body.option=='building'||req.body.option=='zipcode'){
+		var address = {};
+		address['address.'+req.body.option] = req.body.criteria;
+		criteria = address;
+		//console.log(criteria);
+	}else{
+		criteria[req.body.option] =req.body.criteria;
+	}
+	console.log(criteria);
+	read_n_print(res,criteria);
+	*/
+	var api = false;
+	search_print(req,res,api);
+});
+
+app.get('/api/restaurant/read/:option/:criteria',function(req,res){
+	var api = true;
+	search_print(req,res,api);
+});
+
+
+
 app.post('/delete',function(req,res){
 	if(req.session.userID){
 	queryAsObject = req.body;
@@ -279,7 +310,42 @@ app.post('/delete',function(req,res){
 	
 });
 
-
+function search_print(req,res,api){
+	if(api){
+		console.log("API");
+		queryAsObject = req.params;
+	}else{
+		queryAsObject = req.body;
+	}	
+	
+	var criteria = {};
+		if(queryAsObject.option=='street'||queryAsObject.option=='building'||queryAsObject.option=='zipcode'){
+			var address = {};
+			address['address.'+queryAsObject.option] = queryAsObject.criteria;
+			criteria = address;
+		//console.log(criteria);
+		}else{
+			criteria[queryAsObject.option] =queryAsObject.criteria;
+		}
+	console.log(criteria);
+	if(api){
+		MongoClient.connect(mongourl,function(err,db){
+		assert.equal(err,null);
+		findRestaurants(db,criteria,function(restaurants){
+			db.close();
+			if(restaurants.length == 0){
+				var result = {};
+				res.end(result);
+			}else{
+				res.end(JSON.stringify(restaurants));
+			}
+		});
+		
+	});
+	}else{
+	read_n_print(res,criteria);
+	}
+}
 function reg2DB(db,new_user,callback){
 	db.collection('User').insertOne(new_user,function(err,res){
 	assert.equal(err,null);
@@ -489,10 +555,10 @@ function createRest(req,res,api,callback) {
 	});
 }
 
-function read_n_print(res){
+function read_n_print(res,criteria){
 	MongoClient.connect(mongourl,function(err,db){
 		assert.equal(err,null);
-		findRestaurants(db,{},function(restaurants){
+		findRestaurants(db,criteria,function(restaurants){
 			db.close();
 			if(restaurants.length == 0){
 				res.end('Not Found!');

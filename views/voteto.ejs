@@ -2,12 +2,11 @@
 <body>
 
 <h1><%=d[0].name%></h1>
-<form id='details' method='POST' action='/voteto'>
+<form id='voteto' method='POST' action='/vo'>
 <input type="hidden" name="id" value="<%=d[0]._id%>"><br>
 
 
 Grades:<br>
-<input type="text" name="user" value="<%=d[0].grades.user%>" readonly>,
 <select name="score">
 				<option value="1">1</option>
 				<option value="2">2</option>
@@ -23,7 +22,7 @@ Grades:<br>
 
 <input type="hidden" name="owner" value="<%=d[0].owner%>" readonly><br>
 </form>
-<button type="submit" form="details" value="Edit">Vote</button><br>
+<button type="submit" form="voteto" value="edit">Edit</button><br>
 
 
 </body>

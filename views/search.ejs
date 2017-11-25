@@ -1,0 +1,26 @@
+<html><head><title>Search</title></head> 
+<body>
+
+<h1>Search</h1>
+<form id='search' method='POST' action='/search'>
+
+
+Search From:<br>
+<select name="option">
+				<option value="rid">Restaurant ID</option>
+				<option value="name">Name</option>
+				<option value="borough">Borough</option>
+				<option value="cuisine">Cuisine</option>
+				<option value="street">Street</option>
+				<option value="building">Building</option>
+				<option value="zipcode">Zipcode</option>
+			</select>
+<br>
+<input type="text" name="criteria" required>
+
+
+<button type="submit" form="search" value="search">Search</button><br>
+
+
+</body>
+</html> 

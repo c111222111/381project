@@ -4,7 +4,8 @@
 <h1><%=d[0].name%></h1>
 <form id='details' method='POST' action='/update' enctype="multipart/form-data">
 <input type="hidden" name="id" value="<%=d[0]._id%>"><br>
-    <!--<img src='data:image/jpeg;base64,"<%=d[0].photo%>"' /></br>-->
+
+<img src='data:<%=d[0]["photo-mimetype"]%>;base64,<%=d[0]["photo"]%>' /></br>
 
 
 
@@ -35,9 +36,7 @@ Zipcode:<br>
 <input type="text" name="zipcode" value="<%=d[0].address.zipcode%>" ><br>
 <%}else{%>
 <input type="text" name="zipcode" value=""><br><%}%>
-
 Coord:<br>
-
 
 <%if (d[0].address.coord){ %>
 <% if (d[0].address.coord.length == 2){%>
@@ -55,8 +54,7 @@ Coord:<br>
 <input type="text" name="lon" value="" >
 <input type="text" name="att" value="" >
 <%}%>
-
-
+			
 File:<input type="file" name="filetoupload"><br>			
 
 <input type="hidden" name="owner" value="<%=d[0].owner%>" readonly><br>
