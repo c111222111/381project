@@ -10,11 +10,11 @@ var fileUpload = require('express-fileupload');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var ObjectID = require('mongodb').ObjectID;
-var ExifImage = require('exif').ExifImage;
-var fs = require('fs');
+//var ExifImage = require('exif').ExifImage;
+//var fs = require('fs');
 
 var mongourl = "mongodb://admin:admin@ds141264.mlab.com:41264/s1178044";
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 
 var session = require('cookie-session');
 
@@ -26,7 +26,8 @@ app.use(session({
 
 
 app.use(fileUpload());
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 
 app.listen(process.env.PORT || 8099);
@@ -201,7 +202,7 @@ app.post('/api/restaurant/create',function(req,res){
 		}catch(err){
 			console.log('Error');
 		}
-	}
+	
 	
 });
 
@@ -520,9 +521,11 @@ function createRest(req,res,api,callback) {
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
 	new_r['grades'] = grades;*/
-	
+	if (api){
+	new_r['owner'] = "api_create";
+	}else{
 	new_r['owner'] = req.session.userID;
-
+	}
 	
 	console.log("3",new_r);
 	
