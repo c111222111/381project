@@ -180,10 +180,9 @@ app.post('/fileupload', function(req,res) {
 	});	
 });
 
-app.get('/api/restaurant/create',function(req,res){
-	if(req.session.userID){
+app.post('/api/restaurant/create',function(req,res){
 		try{
-			if(req.query.name){
+			if(req.body.name){
 				console.log("OK");
 				var api = true;
 				createRest(req,res,api,function(callback){
@@ -202,8 +201,6 @@ app.get('/api/restaurant/create',function(req,res){
 		}catch(err){
 			console.log('Error');
 		}
-	}else{
-		res.redirect('/login');
 	}
 	
 });
@@ -487,7 +484,7 @@ function inserting(user,score,id,db,callback){
 function createRest(req,res,api,callback) {
 	console.log('Create precedure');
 	if(api){
-		queryAsObject = req.query;
+		queryAsObject = req.body;
 	}else{
 		queryAsObject = req.body;
 	}
