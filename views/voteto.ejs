@@ -4,6 +4,12 @@
 <h1><%=d[0].name%></h1>
 <form id='voteto' method='POST' action='/vo'>
 <input type="hidden" name="id" value="<%=d[0]._id%>"><br>
+<% if (d[0].grades.length>0) { %>
+<ol>
+<% for (i in d[0].grades) { %>
+<li><%=d[0].grades[i].user%> Give <%=d[0].grades[i].score%> Mark(s)</li>
+<%}}%>
+</ol>
 
 
 Grades:<br>
@@ -22,7 +28,7 @@ Grades:<br>
 
 <input type="hidden" name="owner" value="<%=d[0].owner%>" readonly><br>
 </form>
-<button type="submit" form="voteto" value="edit">Edit</button><br>
+<button type="submit" form="voteto" value="edit">Vote!</button><br>
 
 
 </body>

@@ -10,11 +10,11 @@ var fileUpload = require('express-fileupload');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var ObjectID = require('mongodb').ObjectID;
-var ExifImage = require('exif').ExifImage;
-var fs = require('fs');
+//var ExifImage = require('exif').ExifImage;
+//var fs = require('fs');
 
 var mongourl = "mongodb://admin:admin@ds141264.mlab.com:41264/s1178044";
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 
 var session = require('cookie-session');
 
@@ -26,7 +26,8 @@ app.use(session({
 
 
 app.use(fileUpload());
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 
 app.listen(process.env.PORT || 8099);
@@ -157,7 +158,13 @@ app.post('/login',function(req,res){
 
 app.get('/hello',function(req,res,next){//check session
 	if(req.session.userID){
-		res.redirect('/read');
+		res.writeHead(200, {"Content-Type": "text/html"});
+		res.write('<p>You can go to</p>');
+		res.write('<a href="/create">Create Restaurant</a></br>');
+		res.write('<a href="/read">Read Restaurant</a></br>');
+		res.write('<a href="/vote">Vote Restaurant</a></br>');
+		res.write('<a href="/search">Search Restaurant</a></br>');
+		res.end();
 	}else{
 		res.redirect('/login');
 	}
@@ -180,10 +187,9 @@ app.post('/fileupload', function(req,res) {
 	});	
 });
 
-app.get('/api/restaurant/create',function(req,res){
-	if(req.session.userID){
+app.post('/api/restaurant/create',function(req,res){
 		try{
-			if(req.query.name){
+			if(req.body.name && req.body.owner){
 				console.log("OK");
 				var api = true;
 				createRest(req,res,api,function(callback){
@@ -202,9 +208,7 @@ app.get('/api/restaurant/create',function(req,res){
 		}catch(err){
 			console.log('Error');
 		}
-	}else{
-		res.redirect('/login');
-	}
+	
 	
 });
 
@@ -487,7 +491,7 @@ function inserting(user,score,id,db,callback){
 function createRest(req,res,api,callback) {
 	console.log('Create precedure');
 	if(api){
-		queryAsObject = req.query;
+		queryAsObject = req.body;
 	}else{
 		queryAsObject = req.body;
 	}
@@ -523,9 +527,11 @@ function createRest(req,res,api,callback) {
 	grades['user'] = req.session.userID;
 	grades['score'] = (queryAsObject.score)? queryAsObject.score : '';
 	new_r['grades'] = grades;*/
-	
+	if (api){
+	new_r['owner'] = queryAsObject.owner;
+	}else{
 	new_r['owner'] = req.session.userID;
-
+	}
 	
 	console.log("3",new_r);
 	
