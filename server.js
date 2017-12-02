@@ -33,7 +33,7 @@ app.use(bodyParser.json());
 app.listen(process.env.PORT || 8099);
 
 app.get('/', function(req,res) {
-  res.redirect('/login');
+  res.redirect('/hello');
 });
 
 app.get('/reg',function(req,res){
@@ -325,11 +325,11 @@ function search_print(req,res,api){
 	var criteria = {};
 		if(queryAsObject.option=='street'||queryAsObject.option=='building'||queryAsObject.option=='zipcode'){
 			var address = {};
-			address['address.'+queryAsObject.option] = queryAsObject.criteria;
+			address['address.'+queryAsObject.option] = {$regex:queryAsObject.criteria};
 			criteria = address;
 		//console.log(criteria);
 		}else{
-			criteria[queryAsObject.option] =queryAsObject.criteria;
+			criteria[queryAsObject.option] ={$regex:queryAsObject.criteria};
 		}
 	console.log(criteria);
 	if(api){
