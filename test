@@ -1,6 +1,6 @@
 CURL:
 
-cur -F "name=test" -F "owner=curl" "https://s381-project.herokuapp.com/api/restaurant/create"
+cur -F "name=test" -F "owner=curl" -X POST "https://s381-project.herokuapp.com/api/restaurant/create"
 
 URL:
 https://s381-project.herokuapp.com/api/restaurant/read/:name/:cri
