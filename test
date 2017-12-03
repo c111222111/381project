@@ -1,1 +1,6 @@
+CURL:
+
 curl -X POST -d '{"name":"","owner":""}' -H "application/json" https://s381-project.herokuapp.com/api/restaurant/create
+
+URL:
+https://s381-project.herokuapp.com/api/restaurant/read/:name/:cri
