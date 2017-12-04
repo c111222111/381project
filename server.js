@@ -339,7 +339,7 @@ function search_print(req,res,api){
 			db.close();
 			if(restaurants.length == 0){
 				var result = {};
-				res.end(result);
+				res.end(JSON.stringify(result));
 			}else{
 				res.end(JSON.stringify(restaurants));
 			}
